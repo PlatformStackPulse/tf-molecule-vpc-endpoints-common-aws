@@ -267,7 +267,7 @@ Installed via `make hooks`. Runs on every commit:
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11.3 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
 
 ### Providers
@@ -278,6 +278,14 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_dynamodb_endpoint"></a> [dynamodb\_endpoint](#module\_dynamodb\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_ecr_api_endpoint"></a> [ecr\_api\_endpoint](#module\_ecr\_api\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_ecr_dkr_endpoint"></a> [ecr\_dkr\_endpoint](#module\_ecr\_dkr\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_logs_endpoint"></a> [logs\_endpoint](#module\_logs\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_s3_endpoint"></a> [s3\_endpoint](#module\_s3\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_ssm_endpoint"></a> [ssm\_endpoint](#module\_ssm\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_ssm_messages_endpoint"></a> [ssm\_messages\_endpoint](#module\_ssm\_messages\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
+| <a name="module_sts_endpoint"></a> [sts\_endpoint](#module\_sts\_endpoint) | git::https://github.com/PlatformStackPulse/tf-atom-vpc-endpoint-aws.git | v1.1.0 |
 | <a name="module_this"></a> [this](#module\_this) | git::https://github.com/PlatformStackPulse/tf-label.git | v1.0.0 |
 
 ### Resources
@@ -288,13 +296,23 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_region"></a> [region](#input\_region) | AWS region for service name construction. | `string` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC ID to create endpoints in. | `string` | n/a | yes |
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br/>in the order they appear in the list. New attributes are appended to the<br/>end of the list. The elements of the list are joined by the `delimiter`<br/>and treated as a single ID element. | `list(string)` | `[]` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br/>See description of individual variables for details.<br/>Leave string and numeric variables as `null` to use default value.<br/>Individual variable settings (non-null) override settings in context object,<br/>except for attributes and tags, which are merged. | <pre>object({<br/>    enabled             = optional(bool, true)<br/>    namespace           = optional(string, null)<br/>    tenant              = optional(string, null)<br/>    environment         = optional(string, null)<br/>    stage               = optional(string, null)<br/>    name                = optional(string, null)<br/>    delimiter           = optional(string, null)<br/>    attributes          = optional(list(string), [])<br/>    tags                = optional(map(string), {})<br/>    label_order         = optional(list(string), null)<br/>    regex_replace_chars = optional(string, null)<br/>    id_length_limit     = optional(number, null)<br/>    label_key_case      = optional(string, null)<br/>    label_value_case    = optional(string, null)<br/>    labels_as_tags      = optional(set(string), null)<br/>    descriptor_formats = optional(map(object({<br/>      format = string<br/>      labels = list(string)<br/>    })), {})<br/>  })</pre> | `{}` | no |
 | <a name="input_delimiter"></a> [delimiter](#input\_delimiter) | Delimiter to be used between ID elements.<br/>Defaults to `-` (hyphen). Set to `""` to use no delimiter at all. | `string` | `null` | no |
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br/>Map of maps. Keys are names of descriptors. Values are maps of the form<br/>`{<br/>   format = string<br/>   labels = list(string)<br/>}`<br/>`format` is a Terraform format string to be passed to the `format()` function.<br/>`labels` is a list of labels, in order, to pass to `format()` function.<br/>Label values will be normalized before being passed to `format()` so they will be<br/>identical to how they appear in `id`.<br/>Default is `{}` (`descriptors` output will be empty). | <pre>map(object({<br/>    format = string<br/>    labels = list(string)<br/>  }))</pre> | `{}` | no |
+| <a name="input_enable_dynamodb_endpoint"></a> [enable\_dynamodb\_endpoint](#input\_enable\_dynamodb\_endpoint) | Enable DynamoDB Gateway endpoint. | `bool` | `true` | no |
+| <a name="input_enable_ecr_endpoint"></a> [enable\_ecr\_endpoint](#input\_enable\_ecr\_endpoint) | Enable ECR (API + DKR) Interface endpoints. | `bool` | `false` | no |
+| <a name="input_enable_logs_endpoint"></a> [enable\_logs\_endpoint](#input\_enable\_logs\_endpoint) | Enable CloudWatch Logs Interface endpoint. | `bool` | `false` | no |
+| <a name="input_enable_s3_endpoint"></a> [enable\_s3\_endpoint](#input\_enable\_s3\_endpoint) | Enable S3 Gateway endpoint. | `bool` | `true` | no |
+| <a name="input_enable_ssm_endpoint"></a> [enable\_ssm\_endpoint](#input\_enable\_ssm\_endpoint) | Enable SSM + SSM Messages Interface endpoints. | `bool` | `false` | no |
+| <a name="input_enable_sts_endpoint"></a> [enable\_sts\_endpoint](#input\_enable\_sts\_endpoint) | Enable STS Interface endpoint. | `bool` | `false` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Set to false to prevent the module from creating any resources. | `bool` | `null` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | ID element. Usually used for region e.g. 'uw2', 'us-west-2', OR role 'prod', 'staging', 'dev', 'UAT'. | `string` | `null` | no |
 | <a name="input_id_length_limit"></a> [id\_length\_limit](#input\_id\_length\_limit) | Limit `id` to this many characters (minimum 6).<br/>Set to `0` for unlimited length.<br/>Set to `null` to keep the existing setting, which defaults to `0`.<br/>Does not affect `id_full`. | `number` | `null` | no |
+| <a name="input_interface_security_group_ids"></a> [interface\_security\_group\_ids](#input\_interface\_security\_group\_ids) | Security group IDs for Interface endpoints. | `list(string)` | `[]` | no |
+| <a name="input_interface_subnet_ids"></a> [interface\_subnet\_ids](#input\_interface\_subnet\_ids) | Subnet IDs for Interface endpoints. | `list(string)` | `[]` | no |
 | <a name="input_label_key_case"></a> [label\_key\_case](#input\_label\_key\_case) | Controls the letter case of the `tags` keys (label names) for tags generated by this module.<br/>Does not affect keys of tags passed in via the `tags` input.<br/>Possible values: `lower`, `title`, `upper`.<br/>Default value: `title`. | `string` | `null` | no |
 | <a name="input_label_order"></a> [label\_order](#input\_label\_order) | The order in which the labels (ID elements) appear in the `id`.<br/>Defaults to ["namespace", "environment", "stage", "name", "attributes"].<br/>You can omit any of the 6 labels ("tenant" is the 6th), but at least one must be present. | `list(string)` | `null` | no |
 | <a name="input_label_value_case"></a> [label\_value\_case](#input\_label\_value\_case) | Controls the letter case of ID elements (labels) as included in `id`,<br/>set as tag values, and output by this module individually.<br/>Does not affect values of tags passed in via the `tags` input.<br/>Possible values: `lower`, `title`, `upper` and `none` (no transformation).<br/>Set this to `title` and set `delimiter` to `""` to yield Pascal Case IDs.<br/>Default value: `lower`. | `string` | `null` | no |
@@ -302,6 +320,7 @@ No resources.
 | <a name="input_name"></a> [name](#input\_name) | ID element. Usually the component or solution name, e.g. 'app' or 'jenkins'.<br/>This is the only ID element not also included as a `tag`.<br/>The "name" tag is set to the full `id` string. There is no tag with the value of the `name` input. | `string` | `null` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | ID element. Usually an abbreviation of your organization name, e.g. 'eg' or 'cp', to help ensure generated IDs are globally unique. | `string` | `null` | no |
 | <a name="input_regex_replace_chars"></a> [regex\_replace\_chars](#input\_regex\_replace\_chars) | Terraform regular expression (regex) string.<br/>Characters matching the regex will be removed from the ID elements.<br/>If not set, `"/[^a-zA-Z0-9-]/"` is used to remove all characters other than hyphens, letters and digits. | `string` | `null` | no |
+| <a name="input_route_table_ids"></a> [route\_table\_ids](#input\_route\_table\_ids) | Route table IDs for Gateway endpoints (S3, DynamoDB). | `list(string)` | `[]` | no |
 | <a name="input_stage"></a> [stage](#input\_stage) | ID element. Usually used to indicate role, e.g. 'prod', 'staging', 'source', 'build', 'test', 'deploy', 'release'. | `string` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags (e.g. `{'BusinessUnit': 'XYZ'}`).<br/>Neither the tag keys nor the tag values will be modified by this module. | `map(string)` | `{}` | no |
 | <a name="input_tenant"></a> [tenant](#input\_tenant) | ID element. A customer identifier, indicating who this instance of a resource is for. | `string` | `null` | no |
@@ -310,7 +329,15 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_enabled"></a> [enabled](#output\_enabled) | Whether the module is enabled. |
+| <a name="output_dynamodb_endpoint_id"></a> [dynamodb\_endpoint\_id](#output\_dynamodb\_endpoint\_id) | ID of the DynamoDB Gateway endpoint. |
+| <a name="output_dynamodb_prefix_list_id"></a> [dynamodb\_prefix\_list\_id](#output\_dynamodb\_prefix\_list\_id) | Prefix list ID of the DynamoDB Gateway endpoint. |
+| <a name="output_ecr_api_endpoint_id"></a> [ecr\_api\_endpoint\_id](#output\_ecr\_api\_endpoint\_id) | ID of the ECR API Interface endpoint. |
+| <a name="output_ecr_dkr_endpoint_id"></a> [ecr\_dkr\_endpoint\_id](#output\_ecr\_dkr\_endpoint\_id) | ID of the ECR DKR Interface endpoint. |
+| <a name="output_logs_endpoint_id"></a> [logs\_endpoint\_id](#output\_logs\_endpoint\_id) | ID of the CloudWatch Logs Interface endpoint. |
+| <a name="output_s3_endpoint_id"></a> [s3\_endpoint\_id](#output\_s3\_endpoint\_id) | ID of the S3 Gateway endpoint. |
+| <a name="output_s3_prefix_list_id"></a> [s3\_prefix\_list\_id](#output\_s3\_prefix\_list\_id) | Prefix list ID of the S3 Gateway endpoint (for security groups). |
+| <a name="output_ssm_endpoint_id"></a> [ssm\_endpoint\_id](#output\_ssm\_endpoint\_id) | ID of the SSM Interface endpoint. |
+| <a name="output_sts_endpoint_id"></a> [sts\_endpoint\_id](#output\_sts\_endpoint\_id) | ID of the STS Interface endpoint. |
 <!-- END_TF_DOCS -->
 
 ## Learning Materials
