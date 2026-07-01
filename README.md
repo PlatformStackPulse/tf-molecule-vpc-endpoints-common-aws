@@ -1,30 +1,23 @@
-# Terraform Module Template
+# tf-molecule-vpc-endpoints-common-aws
 
-<!-- Badges: Update REPO_OWNER/REPO_NAME after creating from template -->
-[![CI](https://github.com/PlatformStackPulse/terraform-atom-molecule-module-template/actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Release](https://github.com/PlatformStackPulse/terraform-atom-molecule-module-template/actions/workflows/auto-release.yml/badge.svg)](../../actions/workflows/auto-release.yml)
-[![CodeQL](https://github.com/PlatformStackPulse/terraform-atom-molecule-module-template/actions/workflows/codeql.yml/badge.svg)](../../actions/workflows/codeql.yml)
-[![Changelog](https://github.com/PlatformStackPulse/terraform-atom-molecule-module-template/actions/workflows/changelog.yml/badge.svg)](../../actions/workflows/changelog.yml)
-![Latest Release](https://img.shields.io/github/v/release/PlatformStackPulse/terraform-atom-molecule-module-template?label=latest%20release&sort=semver)
+<!-- Badges -->
+[![CI](https://github.com/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws/actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![Release](https://github.com/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws/actions/workflows/auto-release.yml/badge.svg)](../../actions/workflows/auto-release.yml)
+[![CodeQL](https://github.com/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws/actions/workflows/codeql.yml/badge.svg)](../../actions/workflows/codeql.yml)
 ![Terraform](https://img.shields.io/badge/terraform-%3E%3D1.6.0-blue?logo=terraform)
-![License](https://img.shields.io/github/license/PlatformStackPulse/terraform-atom-molecule-module-template)
+![License](https://img.shields.io/github/license/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws)
 
-A production-ready template for creating Terraform modules following the **one module per repository** best practice, with built-in CI/CD, security scanning, testing, documentation generation, and publishing to public registries.
+A Terraform **molecule** that provisions the standard set of AWS VPC endpoints for private connectivity — so workloads in private subnets can reach AWS services without traversing the public internet or a NAT gateway. It composes the `tf-atom-vpc-endpoint-aws` atom once per endpoint and shares a single `tf-label` context.
 
 ## Features
 
-- **One Module Per Repo** — Module lives at the root; no nested `modules/` directory
-- **Registry Publishing** — Auto-publish to Terraform Registry, Artifactory, or GitLab on release
-- **Native Terraform Testing** — `terraform test` with mock providers (no external tools)
-- **Security Scanning** — Trivy IaC scanning for HIGH/CRITICAL vulnerabilities
-- **Linting** — TFLint with AWS ruleset (preset "all")
-- **Auto Documentation** — terraform-docs generates README sections on every commit
-- **GitHub Actions CI/CD** — Workflows for the full module lifecycle
-- **Auto Release** — CI passes on main → auto-tag → GitHub Release created
-- **Pre-Commit Hooks** — Format, validate, lint, docs, and security on every commit
-- **Conventional Commits** — Enforced commit message format
-- **Semantic Versioning** — Automated version management and releases
-- **DevContainer** — VS Code remote development ready
+- **Gateway endpoints** — S3 and DynamoDB, attached to the supplied route tables (enabled by default).
+- **Interface endpoints** — ECR (API + DKR), SSM + SSM Messages, CloudWatch Logs, and STS, each with `private_dns_enabled = true` (opt-in).
+- **Per-endpoint toggles** — Every endpoint is independently switchable via `enable_*` inputs; disabled endpoints create nothing and return `""` ids.
+- **Consistent naming & tags** — Standard `tf-label` context (`namespace`, `stage`, `name`, `tags`, …) is threaded to every underlying endpoint.
+- **Atom composition** — All endpoints are built from the pinned `tf-atom-vpc-endpoint-aws?ref=v1.1.0` atom, keeping endpoint behaviour uniform.
+- **Prefix-list outputs** — Exposes the S3/DynamoDB Gateway prefix-list ids for use in security-group egress rules.
+- **Native Terraform testing** — `terraform test` unit suite runs with a mock AWS provider (no credentials, no external tools).
 
 ## CI Pipeline
 
@@ -77,40 +70,57 @@ See [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md) for detailed instructions.
 
 ## Usage
 
-### From GitHub
+### Gateway endpoints only (default)
 
 ```hcl
-module "this" {
-  source = "github.com/PlatformStackPulse/terraform-aws-my-module?ref=v1.0.0"
+module "vpc_endpoints" {
+  source = "git::https://github.com/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws.git?ref=v1.0.0"
 
-  name        = "my-resource"
-  environment = "dev"
-  namespace   = "myorg"
+  namespace = "eg"
+  stage     = "prod"
+  name      = "platform"
+
+  vpc_id          = module.vpc.vpc_id
+  region          = "us-east-1"
+  route_table_ids = module.vpc.private_route_table_ids
+
+  # S3 + DynamoDB Gateway endpoints are enabled by default.
 
   tags = {
-    Project = "example"
+    Project = "platform"
     Owner   = "platform-engineering"
   }
 }
 ```
 
-### From Terraform Registry
+### Full private-connectivity set (Gateway + Interface endpoints)
 
 ```hcl
-module "this" {
-  source  = "PlatformStackPulse/my-module/aws"
-  version = "~> 1.0"
+module "vpc_endpoints" {
+  source = "git::https://github.com/PlatformStackPulse/tf-molecule-vpc-endpoints-common-aws.git?ref=v1.0.0"
 
-  name        = "my-resource"
-  environment = "dev"
-  namespace   = "myorg"
+  namespace = "eg"
+  stage     = "prod"
+  name      = "platform"
 
-  tags = {
-    Project = "example"
-    Owner   = "platform-engineering"
-  }
+  vpc_id = module.vpc.vpc_id
+  region = "us-east-1"
+
+  # Gateway endpoints
+  route_table_ids = module.vpc.private_route_table_ids
+
+  # Interface endpoints
+  interface_subnet_ids         = module.vpc.private_subnet_ids
+  interface_security_group_ids = [aws_security_group.endpoints.id]
+
+  enable_ecr_endpoint  = true
+  enable_ssm_endpoint  = true
+  enable_logs_endpoint = true
+  enable_sts_endpoint  = true
 }
 ```
+
+Required inputs: `vpc_id`, `region`. Gateway endpoints additionally need `route_table_ids`; Interface endpoints need `interface_subnet_ids` and `interface_security_group_ids`.
 
 ## Module Structure
 
@@ -339,6 +349,30 @@ No resources.
 | <a name="output_ssm_endpoint_id"></a> [ssm\_endpoint\_id](#output\_ssm\_endpoint\_id) | ID of the SSM Interface endpoint. |
 | <a name="output_sts_endpoint_id"></a> [sts\_endpoint\_id](#output\_sts\_endpoint\_id) | ID of the STS Interface endpoint. |
 <!-- END_TF_DOCS -->
+
+## Tests
+
+Unit tests use the native `terraform test` framework with a **mock AWS provider**, so
+they need no AWS credentials and make no real API calls. All assertions run at
+`command = plan` against plan-known values (`tf-label` id strings, input
+pass-throughs, and the `""` fallbacks that disabled endpoints return).
+
+```bash
+# Unit tests (mock provider, no credentials required)
+terraform init -backend=false
+terraform test -test-directory=tests/unit
+
+# Or via the Makefile
+make test-unit
+```
+
+| Test | What it verifies |
+|------|------------------|
+| `creates_when_enabled` | Default toggles plan cleanly; opt-in endpoints (ECR/SSM/STS) return the `""` id fallback while disabled. |
+| `disabled_creates_nothing` | With every `enable_*` toggle off, the module creates no endpoints and all id/prefix-list outputs are `""`. |
+
+Integration tests live in `tests/integration/` and require real AWS credentials
+(`terraform test -test-directory=tests/integration` / `make test-integration`).
 
 ## Learning Materials
 
